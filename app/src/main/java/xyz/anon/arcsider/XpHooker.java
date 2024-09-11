@@ -30,7 +30,7 @@ public class XpHooker implements IXposedHookLoadPackage {
                 Activity mainac = ((Activity) param.thisObject);
                 cfgbdReceiver = new ConfigBoradcastReceiver();
 
-                mainac.getApplicationContext().registerReceiver(cfgbdReceiver,new IntentFilter("xyz.anon.arcsider.RESPONSE_SETUP"));
+                mainac.getApplicationContext().registerReceiver(cfgbdReceiver,new IntentFilter("xyz.anon.arcsider.RESPONSE_SETUP"),Context.RECEIVER_EXPORTED);
 
                 Intent bdIntent = new Intent("xyz.anon.arcsider.REQUEST_SETUP");
                 bdIntent.setComponent(new ComponentName("xyz.anon.arcsider","xyz.anon.arcsider.ArcaeaRequestSetupReceiver"));
