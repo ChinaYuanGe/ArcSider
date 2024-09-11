@@ -7,7 +7,7 @@
     <string name="label_arctap">天键样式</string>
     <string name="label_track_style">轨道样式</string>
     <string name="gene_light">光芒侧</string>
-    <string name="gene_dark">对里侧</string>
+    <string name="gene_dark">纠纷侧</string>
     <string name="gene_follow_chartset">跟随铺面设置</string>
     <string name="gene_colorless">消光侧</string>
 </resources>
