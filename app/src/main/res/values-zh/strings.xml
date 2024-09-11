@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">ArcSider</string>
+    <string name="tips_restart_apply">部分设置需要重启游戏才可以生效</string>
+    <string name="swtich_global">启用替换</string>
+    <string name="switch_hide_pure">隐藏 Pure 提示</string>
+    <string name="label_note">地键样式</string>
+    <string name="label_arctap">天键样式</string>
+    <string name="label_track_style">轨道样式</string>
+    <string name="gene_light">光芒侧</string>
+    <string name="gene_dark">对里侧</string>
+    <string name="gene_follow_chartset">跟随铺面设置</string>
+    <string name="gene_colorless">消光侧</string>
+</resources>

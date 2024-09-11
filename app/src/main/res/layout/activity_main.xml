@@ -20,7 +20,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="部分设定可能需要重启游戏才能应用"
+            android:text="@string/tips_restart_apply"
             android:textAlignment="center"
             ></TextView>
 
@@ -34,7 +34,7 @@
             android:layout_height="wrap_content"
             android:paddingLeft="32px"
             android:paddingRight="32px"
-            android:text="启用替换" />
+            android:text="@string/swtich_global" />
 
         <Space
             android:layout_width="match_parent"
@@ -46,12 +46,12 @@
             android:layout_height="wrap_content"
             android:paddingLeft="32px"
             android:paddingRight="32px"
-            android:text="关闭 Pure 提示" />
+            android:text="@string/switch_hide_pure" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="地键样式" />
+            android:text="@string/label_note" />
 
         <RadioGroup
             android:id="@+id/radiogroup_note_style"
@@ -63,26 +63,26 @@
                 android:id="@+id/radio_note_light"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="光侧" />
+                android:text="@string/gene_light" />
 
             <RadioButton
                 android:id="@+id/radio_note_dark"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="对里侧"
+                android:text="@string/gene_dark"
                 android:checked="true"/>
 
             <RadioButton
                 android:id="@+id/radio_note_game"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="跟随铺面"/>
+                android:text="@string/gene_follow_chartset"/>
         </RadioGroup>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="天键样式" />
+            android:text="@string/label_arctap" />
 
         <RadioGroup
             android:id="@+id/radiogroup_arctap_style"
@@ -94,26 +94,26 @@
                 android:id="@+id/radio_arctap_light"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="光侧" />
+                android:text="@string/gene_light" />
 
             <RadioButton
                 android:id="@+id/radio_arctap_dark"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="对里侧"
+                android:text="@string/gene_dark"
                 android:checked="true"/>
 
             <RadioButton
                 android:id="@+id/radio_arctap_game"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="跟随铺面"/>
+                android:text="@string/gene_follow_chartset"/>
         </RadioGroup>
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="轨道样式" />
+            android:text="@string/label_track_style" />
 
         <RadioGroup
             android:id="@+id/radiogroup_trackstyle"
@@ -125,12 +125,12 @@
                 android:id="@+id/radio_track_light"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="光侧" />
+                android:text="@string/gene_light" />
             <RadioButton
                 android:id="@+id/radio_track_colorless"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="消光侧" />
+                android:text="@string/gene_colorless" />
             <RadioButton
                 android:id="@+id/radio_track_rei"
                 android:layout_width="match_parent"
@@ -140,7 +140,7 @@
                 android:id="@+id/radio_track_dark"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="对里侧" />
+                android:text="@string/gene_dark" />
             <RadioButton
                 android:id="@+id/radio_track_arcana"
                 android:layout_width="match_parent"

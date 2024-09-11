@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">ArcSider</string>
+    <string name="tips_restart_apply">Some changes need restart game to apply.</string>
+    <string name="swtich_global">Enable Replace</string>
+    <string name="switch_hide_pure">Hide Pure hit texture</string>
+    <string name="label_note">Note style</string>
+    <string name="label_arctap">ArcTap style</string>
+    <string name="label_track_style">Track texture</string>
+    <string name="gene_light">Light</string>
+    <string name="gene_dark">Conflict</string>
+    <string name="gene_follow_chartset">Follow chart set</string>
+    <string name="gene_colorless">ColorLess</string>
 </resources>
