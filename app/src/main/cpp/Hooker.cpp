@@ -22,6 +22,16 @@ struct ListOpenPathReplaceInfo{
     std::function<char*()> replace;
 };
 
+static char* RegexCheckout[] =
+        {"img\\/bg\\/1080\\/.*.\\.jpg",
+         "img\\/bg\\/1080\\/.*.\\.png",
+         "img\\/bg\\/.*.\\.png",
+         "img\\/bg\\/.*.\\.jpg",
+         "img\\/.*.\\.jpg",
+         "img\\/.*.\\.png",
+         "models\\/.*.\\.png",
+         nullptr};
+
 static OpenPathReplaceInfo RegexReplaceList[]{
         {"img\\/bg\\/1080\\/.*.\\.jpg",[](){ //The default replacement
             return (char*)Config[CFG_DefaultReplaceBGTexture];
@@ -504,6 +514,36 @@ static OpenPathReplaceInfo ReplaceList[]{
         {"img/bg/diamond_dynamix_light.png",[](){
             return (char*)"img/bg/diamond.png";
         }},
+        {"img/bg/triangle_light.png",[](){
+            return (char*)"img/bg/diamond.png";
+        }},
+        {"img/bg/1080/etherstrike_diamond.png",[](){
+            return (char*)"img/bg/1080/epilogue_diamond.png";
+        }},
+        {"img/bg/1080/diamond_ringedgenesis.png",[](){
+            return (char*)"img/bg/1080/epilogue_diamond.png";
+        }},
+        {"img/bg/1080/alice_light_diamond.png",[](){
+            return (char*)"img/bg/1080/alice_conflict_diamond.png";
+        }},
+        {"img/bg/1080/shiawase_clear.png",[](){
+            return (char*)"img/bg/1080/single2_conflict_diamond.png";
+        }},
+        {"img/bg/1080/touhou_light_clear.png",[](){
+            return (char*)"img/bg/1080/touhou_conflict_clear.png.png";
+        }},
+        {"img/bg/1080/byd_2_light-clear.png",[](){
+            return (char*)"img/bg/1080/byd_2_conflict-clear.png";
+        }},
+        {"img/bg/1080/byd_diamond_light.png",[](){
+            return (char*)"img/bg/1080/byd_diamond_conflict.png";
+        }},
+        {"img/bg/1080/diamond_finale_light.png",[](){
+            return (char*)"img/bg/1080/diamond_finale_conflict.png";
+        }},
+        {"img/bg/1080/nijuusei-light-b_clear.png",[](){
+            return (char*)"img/bg/1080/nijuusei-conflict-b_clear.png";
+        }},
         {nullptr}};
 
 static ListOpenPathReplaceInfo ArrayReplaceList[] = {
@@ -545,7 +585,18 @@ AAsset* ReplaceFun_AAssetManager_open(AAssetManager *mgr, const char *filename, 
         }
         else return AAssetManager_open(mgr, filename, mode);
     }
+    bool CanProcess = false;
+    for(int i=0;RegexCheckout[i] != nullptr;i++){
+        regex r(RegexCheckout[i]);
+        if(regex_match(filename,r)){
+            CanProcess = true;
+            break;
+        }
+    }
 
+    if(!CanProcess){
+        return AAssetManager_open(mgr,filename,mode);
+    }
     //Meet replacing
     for(int i=0;ReplaceList[i].target != nullptr;i++) {
         if (strcmp(filename, ReplaceList[i].target) == 0)
@@ -619,6 +670,20 @@ FILE *hookm_fopen(const char *path, const char *mode)
     char filename[128];
 
     strcpy(filename,(path+strlen(dataPathPrefix)));
+
+    bool CanProcess = false;
+    for(int i=0;RegexCheckout[i] != nullptr;i++){
+        regex r(RegexCheckout[i]);
+        if(regex_match(filename,r)){
+            CanProcess = true;
+            break;
+        }
+    }
+
+    if(!CanProcess){
+        return fopen(path,mode);
+    }
+
     //Meet replacing
     for(int i=0;ReplaceList[i].target != nullptr;i++) {
         if (strcmp(filename, ReplaceList[i].target) == 0)
