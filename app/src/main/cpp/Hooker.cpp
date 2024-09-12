@@ -29,7 +29,7 @@ static char* RegexCheckout[] =
          "img\\/bg\\/.*.\\.jpg",
          "img\\/.*.\\.jpg",
          "img\\/.*.\\.png",
-         "models\\/.*.\\.png",
+         "models\\/.*",
          nullptr};
 
 static OpenPathReplaceInfo RegexReplaceList[]{
