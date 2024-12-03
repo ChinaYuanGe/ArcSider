@@ -1,23 +1,43 @@
 package xyz.anon.arcsider;
 
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContentResolverCompat;
 
 import android.app.AndroidAppHelper;
 import android.content.BroadcastReceiver;
+import android.content.ContentProvider;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.AssetManager;
+import android.media.MediaMetadata;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.FileUtils;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.logging.Logger;
 
 import xyz.anon.arcsider.databinding.ActivityMainBinding;
@@ -56,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
         public static void setTrackStyle(int val){Write("track_style",Integer.toString(val));}
 
         public static String ConfigPath = null;
-        static String Read(String name){
+        public static String Read(String name){
             try {
                 File s = new File(ConfigPath + "/"+name);
                 byte[] rd = new byte[(int)s.length()];
@@ -70,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
                 return null;
             }
         }
-        static void Write(String name,String value){
+        public static void Write(String name,String value){
             try{
                 File root = new File(ConfigPath);
                 if(!root.isDirectory()){
@@ -90,12 +110,70 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     private ActivityMainBinding binding;
-    //private ArcaeaRequestSetupReceiver requestSetupReceiver;
+    RequestContentUrlReceiver CurlReqReceiver;
+
+    ActivityResultLauncher<String> mGetContext = registerForActivityResult(new ActivityResultContracts.GetContent(), new ActivityResultCallback<Uri>() {
+        @Override
+        public void onActivityResult(Uri result) {
+            /* Is this way to detect empty input? */
+            try{
+                if(result.equals(Uri.EMPTY)) return;
+            }
+            catch(Throwable t){ return;}
+
+            try {
+                InputStream stream = MainActivity.this.getContentResolver().openInputStream(result);
+                try {
+                    File target = new File(MainActivity.this.getFilesDir(),"replace/content.zip");
+                    if(target.exists() && target.isFile()){
+                        target.delete();
+                    }
+                    if(target.createNewFile()) {
+                        FileOutputStream output = new FileOutputStream(target);
+
+                        byte[] buffer = new byte[1024];
+
+                        int rsize = stream.read(buffer);
+                        while(rsize >= 0){
+                            output.write(buffer,0,rsize);
+                            rsize = stream.read(buffer);
+                        }
+
+                        output.flush();
+                        output.close();
+                        stream.close();
+
+                        // Create request receiver
+                        if (CurlReqReceiver != null) {
+                            MainActivity.this.unregisterReceiver(CurlReqReceiver);
+                        }
+                        CurlReqReceiver = new RequestContentUrlReceiver();
+                        MainActivity.this.registerReceiver(CurlReqReceiver,new IntentFilter("xyz.anon.arcsider.REQUEST_CURL"),Context.RECEIVER_EXPORTED);
+                        Log.d("xyz.anon.arcsider","Content sync setup completed.");
+                        ((TextView)MainActivity.this.findViewById(R.id.lbl_synctips)).setText(getText(R.string.rt_lbl_start_arcaea));
+
+                    }
+                }
+                catch (Exception ex){
+                    Toast.makeText(MainActivity.this,getText(R.string.rt_toast_sthgowrong).toString(),Toast.LENGTH_LONG).show();
+                    Log.e("xyz.anon.arcsider",ex.getMessage());
+                    ex.printStackTrace();
+                }
+            }
+            catch(FileNotFoundException ex){
+                Toast.makeText(MainActivity.this,getText(R.string.rt_toast_fileloadfailed).toString(),Toast.LENGTH_LONG).show();
+            }
+            catch(Throwable t){
+                Toast.makeText(MainActivity.this,getText(R.string.rt_toast_sthgowrong).toString(),Toast.LENGTH_LONG).show();
+                Log.e("xyz.anon.arcsider",t.getMessage());
+                t.printStackTrace();
+            }
+        }
+    });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Config.ConfigPath = this.getFilesDir().getAbsolutePath() + "/configs";
-
         Log.d("xyz.anon.arcsider","CurrentConfigPath="+Config.ConfigPath);
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
@@ -150,10 +228,65 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        //requestSetupReceiver = new ArcaeaRequestSetupReceiver();
+        binding.btnSetReplace.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mGetContext.launch("*/*");
+            }
+        });
 
-        //registerReceiver(requestSetupReceiver,new IntentFilter("xyz.cnyg.arcsider.REQUEST_SETUP"));
+        binding.btnUseDefaultReplace.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+                    InputStream stream = MainActivity.this.getAssets().open("sider-default.zip");
+                    try {
+                        File target = new File(MainActivity.this.getFilesDir(),"replace/content.zip");
+                        if(target.exists() && target.isFile()){
+                            target.delete();
+                        }
+                        if(target.createNewFile()) {
+                            FileOutputStream output = new FileOutputStream(target);
 
+                            byte[] buffer = new byte[1024];
+
+                            int rsize = stream.read(buffer);
+                            while(rsize >= 0){
+                                output.write(buffer,0,rsize);
+                                rsize = stream.read(buffer);
+                            }
+
+                            output.flush();
+                            output.close();
+                            stream.close();
+
+                            // Create request receiver
+                            if (CurlReqReceiver != null) {
+                                MainActivity.this.unregisterReceiver(CurlReqReceiver);
+                            }
+                            CurlReqReceiver = new RequestContentUrlReceiver();
+                            MainActivity.this.registerReceiver(CurlReqReceiver,new IntentFilter("xyz.anon.arcsider.REQUEST_CURL"),Context.RECEIVER_EXPORTED);
+                            Log.d("xyz.anon.arcsider","Content sync setup completed.");
+                            ((TextView)MainActivity.this.findViewById(R.id.lbl_synctips)).setText(getText(R.string.rt_lbl_start_arcaea));
+
+                        }
+                    }
+                    catch (Exception ex){
+                        Toast.makeText(MainActivity.this,getText(R.string.rt_toast_sthgowrong).toString(),Toast.LENGTH_LONG).show();
+                        Log.e("xyz.anon.arcsider",ex.getMessage());
+                        ex.printStackTrace();
+                    }
+                }
+                catch(FileNotFoundException ex){
+                    Toast.makeText(MainActivity.this,getText(R.string.rt_toast_fileloadfailed).toString(),Toast.LENGTH_LONG).show();
+                }
+                catch(Throwable t){
+                    Toast.makeText(MainActivity.this,getText(R.string.rt_toast_sthgowrong).toString(),Toast.LENGTH_LONG).show();
+                    Log.e("xyz.anon.arcsider",t.getMessage());
+                    t.printStackTrace();
+                }
+            }
+        });
     }
 
     void SendConfigBroadcast(){
@@ -165,9 +298,15 @@ public class MainActivity extends AppCompatActivity {
         data.putExtra("track_style",Config.getTrackStyle());
         this.sendBroadcast(data);
     }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
     @Override
     protected void onDestroy() {
-        //unregisterReceiver(requestSetupReceiver);
+        if(CurlReqReceiver != null) unregisterReceiver(CurlReqReceiver);
         super.onDestroy();
     }
 }

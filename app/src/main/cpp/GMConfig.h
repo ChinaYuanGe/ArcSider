@@ -9,6 +9,10 @@
 
 #define TrackLightIndx 2
 
+static char* EmptyTexture = "img/empty.png";
+
+static char* PureTexture = "img/hit_pure.png";
+
 static char* TrackTextures[] ={
         "img/track.png",
         "img/track_colorless.png",

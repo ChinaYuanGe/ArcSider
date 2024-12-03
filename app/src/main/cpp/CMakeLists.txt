@@ -22,10 +22,11 @@ add_library( # Sets the name of the library.
 
         # Provides a relative path to your source file(s).
         AndroidUtils/Logger.hpp
-        BaseUtils/Header/Array.hpp
         GMConfig.h
-        Utils/Header/ProcMap.hpp
-        Utils/Header/Hooker.hpp
+        Utils/Source/ProcMap.cpp
+        BaseUtils/Source/Platform.cpp
+        Utils/Source/Hooker.cpp
+        AssetPatch/AssetPatch.cpp
         Hooker.cpp)
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by

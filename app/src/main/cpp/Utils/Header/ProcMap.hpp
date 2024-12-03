@@ -46,8 +46,9 @@ private:
 };
 namespace PMap
 {
+    ProcMap ParseFromSelf();
     ProcMap ParseFromFile(char *path);
 }
 
-#include "../Source/ProcMap.cpp"
+//#include "../Source/ProcMap.cpp"
 #endif

@@ -9,734 +9,288 @@
 #include "AndroidUtils/Logger.hpp"
 #include "Utils/Header/Hooker.hpp"
 #include "GMConfig.h"
+#include "AssetPatch/AssetPatch.h"
 
+static bool fopenReplaceActivated = false;
 
-struct OpenPathReplaceInfo
-{
-    char *target;
-    std::function<char *()> replace;
-};
+//static char *AssetSearchBase = "/data/user/0/moe.low.arc/asset_patch/root/";
+//static char *bundlePath = "/data/user/0/moe.low.arc/files/cb/active/";
+//static char *PathReplaceListFile = "/data/user/0/moe.low.arc/asset_patch/path.txt";
+const char *AssetSearchBaseRelPath = "/asset_patch/root/";
+static char AssetSearchBase[128];
 
-struct ListOpenPathReplaceInfo{
-    char **targets;
-    std::function<char*()> replace;
-};
+const char *bundlePathRelPath = "/files/cb/active/";
+static char bundlePath[128];
 
-static char* RegexCheckout[] =
-        {"img\\/bg\\/1080\\/.*.\\.jpg",
-         "img\\/bg\\/1080\\/.*.\\.png",
-         "img\\/bg\\/.*.\\.png",
-         "img\\/bg\\/.*.\\.jpg",
-         "img\\/.*.\\.jpg",
-         "img\\/.*.\\.png",
-         "models\\/.*",
-         nullptr};
+const char *PathReplaceListFileRelPath = "/asset_patch/path.txt";
+static char PathReplaceListFile[128];
 
-static OpenPathReplaceInfo RegexReplaceList[]{
-        {"img\\/bg\\/1080\\/.*.\\.jpg",[](){ //The default replacement
-            return (char*)Config[CFG_DefaultReplaceBGTexture];
-        }},
-        {nullptr}
-};
+PathReplace **PathReplaceList;
 
-static OpenPathReplaceInfo ReplaceList[]{
-        {"img/hit_pure.png", []()
-                             {
-                                if(Config[CFG_EnableHidePureTexture]) {
-                                    return (char *) "img/empty.png";
-                                }
-                                else return (char *)nullptr;
-                             }},
-        {"img/shutter_l.png", []()
-                             {
-                                 return (char *)"img/shutter_l_finale.png";
-                             }},
-        {"img/shutter_r.png", []()
-                             {
-                                 return (char *)"img/shutter_r.png";
-                             }},
-        // Begin of bg replacement
-        {"img/bg/1080/pragmatism.jpg",[](){
-            return (char *)"img/bg/1080/vs_conflict.jpg";
-        }},
-
-        {"img/bg/1080/pragmatism3.jpg",[](){
-            return (char *)"img/bg/1080/vs_conflict.jpg";
-        }},
-
-        {"img/bg/1080/shiawase.jpg",[](){
-            return (char *)"img/bg/1080/gc_conflict.jpg";
-        }},
-
-        {"img/bg/1080/nirvluce.jpg",[](){
-            return (char *)"img/bg/1080/gc_conflict.jpg";
-        }},
-
-        {"img/bg/1080/auxesia.jpg",[](){
-            return (char *)"img/bg/1080/aterlbus.jpg";
-        }},
-
-        {"img/bg/1080/modelista.jpg",[](){
-            return (char *)nullptr; //Ok for dark
-        }},
-
-        {"img/bg/1080/quon.jpg",[](){
-            return (char *)"img/bg/1080/nijuusei-conflict-b.jpg";
-        }},
-
-        {"img/bg/1080/etherstrike.jpg",[](){
-            return (char *)"img/bg/1080/finale_conflict.jpg";
-        }},
-
-        {"img/bg/1080/fractureray.jpg",[](){
-            return (char *)"img/bg/1080/finale_conflict.jpg";
-        }},
-
-        {"img/bg/1080/gc_lance.jpg",[](){
-            return (char *)"img/bg/1080/gc_conflict.jpg";
-        }},
-
-        {"img/bg/1080/solitarydream.jpg",[](){
-            return (char *)"img/bg/1080/single2_conflict.jpg";
-        }},
-
-        {"img/bg/1080/chuni-worldvanquisher.jpg",[](){
-            return (char *)"img/bg/1080/chunithmnew_conflict.jpg";
-        }},
-
-        {"img/bg/1080/ringedgenesis.jpg",[](){
-            return (char *)"img/bg/1080/finale_conflict.jpg";
-        }},
-
-        {"img/bg/1080/shiawase2.jpg",[](){
-            return (char *)"img/bg/1080/single_conflict.jpg";
-        }},
-
-        {"img/bg/1080/arcahv.jpg",[](){
-            return (char *)"img/bg/1080/zettai.jpg";
-        }},
-
-        {"img/bg/1080/felis.jpg",[](){
-            return (char *)"img/bg/1080/finale_conflict.jpg";
-        }},
-
-        {"img/bg/1080/omegafour.jpg",[](){
-            return (char *)"img/bg/1080/finale_conflict.jpg";
-        }},
-
-        {"img/bg/1080/gou.jpg",[](){
-            return (char *)"img/bg/1080/gc_ouroboros.jpg";
-        }},
-
-        {"img/bg/1080/aegleseeker.jpg",[](){
-            return (char *)"img/bg/1080/aegleseeker_grey.jpg";
-        }},
-
-        {"img/bg/1080/tanoc_red.jpg",[](){
-            return (char *)nullptr; //Ok for dark
-        }},
-
-        {"img/bg/1080/temptation.jpg",[](){
-            return (char *)"img/bg/1080/maimai_boss.jpg";
-        }},
-
-        {"img/bg/1080/magnolia.jpg",[](){
-            return (char *)nullptr; //Ok for dark
-        }},
-
-        {"img/bg/1080/eden_boss.jpg",[](){
-            return (char *)"img/bg/1080/eden_conflict.jpg";
-        }},
-
-        {"img/bg/1080/vulcanus.jpg",[](){
-            return (char *)"img/bg/1080/rotaeno_conflict.jpg";
-        }},
-
-        {"img/bg/1080/alice_light.jpg",[](){
-            return (char *)"img/bg/1080/alice_conflict.jpg";
-        }},
-
-        {"img/bg/1080/base_light.jpg",[](){
-            return (char *)"img/bg/1080/base_conflict.jpg";
-        }},
-
-        {"img/bg/1080/chunithmnew_light.jpg",[](){
-            return (char *)"img/bg/1080/chunithmnew_conflict.jpg";
-        }},
-
-        {"img/bg/1080/cytus_light.jpg",[](){
-            return (char *)"img/bg/1080/cytus_conflict.jpg";
-        }},
-
-        {"img/bg/1080/dynamix_light.jpg",[](){
-            return (char *)"img/bg/1080/dynamix_conflict.jpg";
-        }},
-
-        {"img/bg/1080/eden_append_light.jpg",[](){
-            return (char *)"img/bg/1080/eden_append_conflict.jpg";
-        }},
-
-        {"img/bg/1080/eden_light.jpg",[](){
-            return (char *)"img/bg/1080/eden_conflict.jpg";
-        }},
-
-        {"img/bg/1080/finale_light.jpg",[](){
-            return (char *)"img/bg/1080/finale_conflict.jpg";
-        }},
-
-        {"img/bg/1080/gc_light.jpg",[](){
-            return (char *)"img/bg/1080/gc_conflict.jpg";
-        }},
-
-        {"img/bg/1080/hime_light.jpg",[](){
-            return (char *)"img/bg/1080/hime_conflict.jpg";
-        }},
-
-        {"img/bg/1080/lanota-light.jpg",[](){
-            return (char *)"img/bg/1080/lanota-conflict.jpg";
-        }},
-
-        {"img/bg/1080/maimai_light.jpg",[](){
-            return (char *)"img/bg/1080/maimai_conflict.jpg";
-        }},
-
-        {"img/bg/1080/meta_mysteria.jpg",[](){
-            return (char *)"img/bg/1080/wacca_conflict.jpg";
-        }},
-
-        {"img/bg/1080/mirai_light.jpg",[](){
-            return (char *)"img/bg/1080/mirai_conflict.jpg";
-        }},
-
-        {"img/bg/1080/musedash_light.jpg",[](){
-            return (char *)"img/bg/1080/musedash_conflict.jpg";
-        }},
-
-        {"img/bg/1080/nijuusei-light-b.jpg",[](){
-            return (char *)"img/bg/1080/nijuusei-conflict-b.jpg";
-        }},
-
-        {"img/bg/1080/nijuusei2_light.jpg",[](){
-            return (char *)"img/bg/1080/nijuusei2_conflict.jpg";
-        }},
-
-        {"img/bg/1080/observer_light.jpg",[](){
-            return (char *)"img/bg/1080/observer_conflict.jpg";
-        }},
-
-        {"img/bg/1080/omatsuri_light.jpg",[](){
-            return (char *)"img/bg/1080/omatsuri_conflict.jpg";
-        }},
-
-        {"img/bg/1080/ongeki_light.jpg",[](){
-            return (char *)"img/bg/1080/ongeki_conflict.jpg";
-        }},
-
-        {"img/bg/1080/prelude_light.jpg",[](){
-            return (char *)"img/bg/1080/prelude_conflict.jpg";
-        }},
-
-        {"img/bg/1080/rotaeno_light.jpg",[](){
-            return (char *)"img/bg/1080/rotaeno_conflict.jpg";
-        }},
-
-        {"img/bg/1080/single_light.jpg",[](){
-            return (char *)"img/bg/1080/single_conflict.jpg";
-        }},
-
-        {"img/bg/1080/single2_light.jpg",[](){
-            return (char *)"img/bg/1080/single2_conflict.jpg";
-        }},
-
-        {"img/bg/1080/tanoc_light.jpg",[](){
-            return (char *)"img/bg/1080/tanoc_conflict.jpg";
-        }},
-
-        {"img/bg/1080/tonesphere-solarsphere.jpg",[](){
-            return (char *)"img/bg/1080/tonesphere-darksphere.jpg";
-        }},
-
-        {"img/bg/1080/touhou_light.jpg",[](){
-            return (char *)"img/bg/1080/touhou_conflict.jpg";
-        }},
-
-        {"img/bg/1080/vs_light.jpg",[](){
-            return (char *)"img/bg/1080/vs_conflict.jpg";
-        }},
-
-        {"img/bg/1080/wacca_light.jpg",[](){
-            return (char *)"img/bg/1080/wacca_conflict.jpg";
-        }},
-
-        {"img/bg/1080/rei.jpg",[](){
-            return (char *)"img/bg/1080/yugamu.jpg";
-        }},
-
-        {"img/bg/1080/zettai_light.jpg",[](){
-            return (char *)"img/bg/1080/zettai.jpg";
-        }},
-        {"img/bg/1080/testify.jpg",[](){
-            return (char *)"img/bg/1080/byd_2_conflict.jpg";
-        }},
-
-        {"img/bg/1080/epilogue.jpg",[](){
-            return (char *)"img/bg/1080/finale_conflict.jpg";
-        }},
-        
-        // Dark bg for doing nothing...
-        {"img/bg/1080/base_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/sheriruth.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/single_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/dynamix_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/lethaeus.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/mirai_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/yugamu.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/axiumcrisis.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/grievouslady.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/lanota-conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/nijuusei-conflict-b.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/tonesphere-darksphere.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/tiferet.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/alexandrite.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/gc_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/gc_ouroboros.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/zettai.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/cyaegha.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/chuni-garakuta.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/chuni-ikazuchi.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/prelude_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/omatsuri_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/tanoc_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/saikyostronger.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/mirai_awakened.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/vs_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/tempestissimo.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/gc_buchigire.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/alice_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/ongeki_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/maimai_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/maimai_boss.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/chunithmthird_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/observer_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/wacca_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/wacca_boss.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/nijuusei2_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/hime_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/musedash_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/single2_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/finale_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/pentiment.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/arcanaeden.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/lamia.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/touhou_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/apophenia.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/chunithmnew_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/spidersthread.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/cytus_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/cytus_boss.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/eden_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/eden_append_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/arghena.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/nihil.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        {"img/bg/1080/alterego.jpg",[](){
-            return (char *)nullptr;
-        }},
-        {"img/bg/1080/rotaeno_conflict.jpg",[](){
-            return (char *)nullptr;
-        }},
-
-        //Manual Replacment
-        {"img/bg/diamond_shiawase.png",[](){
-            return (char*)"img/bg/diamond.png";
-        }},
-        {"img/bg/diamond_dynamix_light.png",[](){
-            return (char*)"img/bg/diamond.png";
-        }},
-        {"img/bg/triangle_light.png",[](){
-            return (char*)"img/bg/diamond.png";
-        }},
-        {"img/bg/1080/etherstrike_diamond.png",[](){
-            return (char*)"img/bg/1080/epilogue_diamond.png";
-        }},
-        {"img/bg/1080/diamond_ringedgenesis.png",[](){
-            return (char*)"img/bg/1080/epilogue_diamond.png";
-        }},
-        {"img/bg/1080/alice_light_diamond.png",[](){
-            return (char*)"img/bg/1080/alice_conflict_diamond.png";
-        }},
-        {"img/bg/1080/shiawase_clear.png",[](){
-            return (char*)"img/bg/1080/single2_conflict_diamond.png";
-        }},
-        {"img/bg/1080/touhou_light_clear.png",[](){
-            return (char*)"img/bg/1080/touhou_conflict_clear.png.png";
-        }},
-        {"img/bg/1080/byd_2_light-clear.png",[](){
-            return (char*)"img/bg/1080/byd_2_conflict-clear.png";
-        }},
-        {"img/bg/1080/byd_diamond_light.png",[](){
-            return (char*)"img/bg/1080/byd_diamond_conflict.png";
-        }},
-        {"img/bg/1080/diamond_finale_light.png",[](){
-            return (char*)"img/bg/1080/diamond_finale_conflict.png";
-        }},
-        {"img/bg/1080/nijuusei-light-b_clear.png",[](){
-            return (char*)"img/bg/1080/nijuusei-conflict-b_clear.png";
-        }},
-        {nullptr}};
-
-static ListOpenPathReplaceInfo ArrayReplaceList[] = {
-        {TrackTextures,[](){
-            return TrackTextures[Config[CFG_ReplacingTrackTextureIndx]];
-        }},
-        {ExtraTrackTextures,[](){
-            return ExtraTrackTextures[Config[CFG_ReplacingExtraTrackTextureIndx]];
-        }},
-        {ArcTapModelTexture,[](){
-            return ArcTapModelTexture[Config[CFG_ArcTapSide]];
-        }},
-        {ArcTapModelMaterial,[](){
-            return ArcTapModelMaterial[Config[CFG_ArcTapSide]];
-        }},
-        {ArcTapModelObject,[](){
-            return ArcTapModelObject[Config[CFG_ArcTapSide]];
-        }},
-        {NoteTextures,[](){
-            return NoteTextures[Config[CFG_NoteSide]];
-        }},
-        {NoteHoldTexture,[](){
-            return NoteHoldTexture[Config[CFG_NoteSide]];
-        }},
-        {NoteHoldHiTexture,[](){
-            return NoteHoldHiTexture[Config[CFG_NoteSide]];
-        }},
-        {nullptr}
-};
-
-AAsset* ReplaceFun_AAssetManager_open(AAssetManager *mgr, const char *filename, int mode){
-    if(!Config[CFG_GlobalEnable]){
-        return AAssetManager_open(mgr, filename, mode);
+vector<AssetPatch *> AssetPatchList;
+AssetPatch* FindPatch(AAsset *id){
+    for(int i=0;i<AssetPatchList.size();i++){
+        if(AssetPatchList[i]->Identify == id) return AssetPatchList[i];
     }
+    return nullptr;
+}
+AssetPatch* FindPatch(const char *file){
+    for(int i=0;i<AssetPatchList.size();i++){
+        if(!strcmp(AssetPatchList[i]->Filename,file)) return AssetPatchList[i];
+    }
+    return nullptr;
+}
 
-    if(!Config[CFG_FileCheckEnd]){
-        if(!strcmp(filename,"img/shutter_l.png")){
-            Config[CFG_FileCheckEnd] = true;
+AAsset* rAAssetManager_open(AAssetManager *mgr, const char *filename, int mode) {
+    // Global Enable gater
+    if (!Config[CFG_GlobalEnable]) return AAssetManager_open(mgr,filename,mode);
+
+    // The first trigger for fopen match, which cannot effect bundle self checking.
+    if (!fopenReplaceActivated && !strcmp(filename, "img/shutter_r.png"))
+        fopenReplaceActivated = true;
+
+    //return AAssetManager_open(mgr,filename,mode);
+    //LOGD((string("AAssetManager opened: ") + string(filename)).c_str());
+
+    // Override always first.
+    AssetPatch *seek = FindPatch(filename);
+    if (seek == nullptr) {
+        seek = CreateAssetPatch(AssetSearchBase, filename);
+        if(seek != nullptr) {
+            AssetPatchList.push_back(seek);
         }
-        else return AAssetManager_open(mgr, filename, mode);
     }
-    bool CanProcess = false;
-    for(int i=0;RegexCheckout[i] != nullptr;i++){
-        regex r(RegexCheckout[i]);
-        if(regex_match(filename,r)){
-            CanProcess = true;
-            break;
+    if (seek != nullptr){// If Still nullptr, give up data override.
+        seek->Pos = 0;
+        seek->Identify = AAssetManager_open(mgr,filename,mode);
+        return seek->Identify;
+    }
+
+    if (PathReplaceList != nullptr) {
+        char *Replace = FindPathReplace(PathReplaceList, filename);
+        if (Replace != nullptr) {
+            return AAssetManager_open(mgr, Replace, mode);
         }
     }
 
-    if(!CanProcess){
-        return AAssetManager_open(mgr,filename,mode);
-    }
-    //Meet replacing
-    for(int i=0;ReplaceList[i].target != nullptr;i++) {
-        if (strcmp(filename, ReplaceList[i].target) == 0)
-        {
-            char *fetchResult = ReplaceList[i].replace();
-            if (fetchResult != nullptr)
-            {
-                __android_log_print(ANDROID_LOG_INFO, __LOGTAG, "Hitted replacement: %s => %s", ReplaceList[i].target, fetchResult);
-                AAsset *openResult = AAssetManager_open(mgr,fetchResult,mode);
-                if(openResult != nullptr) {
-                    return openResult;
-                }
-                else return AAssetManager_open(mgr, filename, mode);
-            }
-            else
-                return AAssetManager_open(mgr, filename, mode);
-        }
-    }
-
-    //ArrayTarget Replacing
-    for(int i=0;ArrayReplaceList[i].targets != nullptr;i++) {
-        for(int j=0;ArrayReplaceList[i].targets[j] != nullptr;j++){
-            if(!strcmp(filename, ArrayReplaceList[i].targets[j])){
-                char *fetchResult = ArrayReplaceList[i].replace();
-                if(fetchResult != nullptr){
-                    __android_log_print(ANDROID_LOG_INFO, __LOGTAG, "Hitted arrayReplacement: %s => %s", ArrayReplaceList[i].targets[j], fetchResult);
-
-                    AAsset *openResult = AAssetManager_open(mgr,fetchResult,mode);
-                    if(openResult != nullptr) {
-                        return openResult;
-                    }
-                    else return AAssetManager_open(mgr, filename, mode);
-                }
-                else
-                    return AAssetManager_open(mgr, filename, mode);
-            }
-        }
-    }
-
-    //Regex replacing for upper's non-matches.
-    for(int i=0;RegexReplaceList[i].target != nullptr;i++) {
-        regex r(RegexReplaceList[i].target);
-        if (regex_match(filename,r))
-        {
-            char *fetchResult = RegexReplaceList[i].replace();
-            if (fetchResult != nullptr)
-            {
-                __android_log_print(ANDROID_LOG_INFO, __LOGTAG, "Hitted replacement: %s => %s", ReplaceList[i].target, fetchResult);
-                AAsset *openResult = AAssetManager_open(mgr,fetchResult,mode);
-                if(openResult != nullptr) {
-                    return openResult;
-                }
-                else return AAssetManager_open(mgr, filename, mode);
-            }
-            else
-                return AAssetManager_open(mgr, filename, mode);
-        }
-    }
-
+    // Nothing to do, return origin.
     return AAssetManager_open(mgr, filename, mode);
 }
-static char *dataPathPrefix = "/data/user/0/moe.low.arc/files/cb/active/";
-FILE *hookm_fopen(const char *path, const char *mode)
+off_t rAAsset_getLength(AAsset* asset){
+    if(!Config[CFG_GlobalEnable]) return AAsset_getLength(asset);
+
+    AssetPatch *seeked = FindPatch(asset);
+    if(seeked != nullptr){
+        return seeked->Length;
+    }
+    else return AAsset_getLength(asset);
+}
+
+int rAAsset_read(AAsset* asset, void* buf, size_t count){
+    if(!Config[CFG_GlobalEnable]) return AAsset_read(asset,buf,count);
+
+    AssetPatch *seeked = FindPatch(asset);
+    if(seeked != nullptr){
+        if(seeked->Pos + 1 >= (seeked->Length)) {
+            return 0;
+        }
+        else {
+            off_t beforeReadPos = seeked->Pos;
+            seeked->Pos =
+                    (seeked->Pos + count) > seeked->Length ? seeked->Length - 1 : seeked->Pos +
+                                                                                  count;
+            int realReadCount = seeked->Pos - beforeReadPos;
+            memcpy(buf, seeked->Data + beforeReadPos, realReadCount);
+            return realReadCount;
+        }
+    }
+    else return AAsset_read(asset,buf,count);
+}
+void rAAsset_close(AAsset* asset){
+    AssetPatch *seeked = FindPatch(asset);
+    if(seeked != nullptr){
+        seeked->Pos = 0;
+        seeked->Identify = nullptr;
+    }
+    AAsset_close(asset);
+}
+
+FILE *rfopen(const char *path, const char *mode)
 {
-    if(!Config[CFG_GlobalEnable]){
-        return fopen(path,mode);
-    }
+    if(!Config[CFG_GlobalEnable]) return fopen(path,mode);
 
-    if(!Config[CFG_FileCheckEnd]) return fopen(path,mode);
-
-    char filename[128];
-
-    strcpy(filename,(path+strlen(dataPathPrefix)));
-
-    bool CanProcess = false;
-    for(int i=0;RegexCheckout[i] != nullptr;i++){
-        regex r(RegexCheckout[i]);
-        if(regex_match(filename,r)){
-            CanProcess = true;
-            break;
-        }
-    }
-
-    if(!CanProcess){
-        return fopen(path,mode);
-    }
-
-    //Meet replacing
-    for(int i=0;ReplaceList[i].target != nullptr;i++) {
-        if (strcmp(filename, ReplaceList[i].target) == 0)
-        {
-            char *fetchResult = ReplaceList[i].replace();
-            if (fetchResult != nullptr)
-            {
-                char replaceFullPath[128];
-                strcpy(replaceFullPath,dataPathPrefix);
-                strcpy((replaceFullPath+strlen(dataPathPrefix)),fetchResult);
-                __android_log_print(ANDROID_LOG_INFO, __LOGTAG, "Hitted fopen replacement: %s => %s", path, replaceFullPath);
-                if(!access(replaceFullPath,F_OK)) {
-
-                    return fopen(replaceFullPath, mode);
-                }
-                else return fopen(path,mode);
+    //return ofopen(path,mode);
+    //LOGD((string("fopen CURRENT checking path=")+string(path)).c_str());
+    if(fopenReplaceActivated && strstr(path,bundlePath) != NULL) {
+        char *shortPath = ((char *) path + strlen(bundlePath));
+        size_t PathLen = strlen(AssetSearchBase) + strlen(shortPath) + 1;
+        char ReplacingPath[256];
+        ReplacingPath[PathLen] = '\0';
+        strcpy(ReplacingPath, AssetSearchBase);
+        strcpy(ReplacingPath + strlen(AssetSearchBase), shortPath);
+        LOGD((string("fopen CURRENT checking path=")+string(path)).c_str());
+        LOGD((string("fopen REPLACING path=")+string(ReplacingPath)).c_str());
+        if (!access(ReplacingPath, F_OK)) { // File overriden replace always first.
+            LOGD("path matching Replace Hit!");
+            FILE *open = fopen(ReplacingPath, mode);
+            if(open != NULL) {
+                return open;
             }
-            else
-                return fopen(path,mode);
+            else fclose(open);
         }
-    }
-
-    for(int i=0;RegexReplaceList[i].target != nullptr;i++) {
-        regex r(RegexReplaceList[i].target);
-        if (regex_match(filename,r)){
-            char *fetchResult = RegexReplaceList[i].replace();
-            if (fetchResult != nullptr)
-            {
-                char replaceFullPath[128];
-                strcpy(replaceFullPath,dataPathPrefix);
-                strcpy((replaceFullPath+strlen(dataPathPrefix)),fetchResult);
-                __android_log_print(ANDROID_LOG_INFO, __LOGTAG, "Hitted fopen replacement: %s => %s", path, replaceFullPath);
-                if(!access(replaceFullPath,F_OK)) {
-
-                    return fopen(replaceFullPath, mode);
+        else if(PathReplaceList != nullptr){ // Path matching replace as secondary.
+            char *search = FindPathReplace(PathReplaceList, shortPath);
+            if(search != nullptr){
+                char bundleReplacePath[256];
+                strcpy(bundleReplacePath,bundlePath);
+                strcpy(bundleReplacePath + strlen(bundlePath),search);
+                bundleReplacePath[(strlen(bundlePath) + strlen(search))] = '\0';
+                LOGD((string("fopen bundle REPLACING path=")+string(bundleReplacePath)).c_str());
+                FILE *open = fopen(bundleReplacePath,mode);
+                if(open != NULL) return open;
+                else {
+                    LOGD("Unable to open file.");
+                    LOGD((string("errno = ")+to_string(errno)).c_str());
                 }
-                else return fopen(path,mode);
             }
-            else
-                return fopen(path,mode);
+            else{
+                LOGD("Unable to find replacement");
+            }
+        }
+    }
+    return fopen(path,mode);
+}
+
+void ReloadPathReplace(){
+    vector<PathReplace *> total;
+
+    PathReplace **mainReplace = nullptr;
+    if(!access(PathReplaceListFile,F_OK)){
+        /* From path.txt */
+        mainReplace = ParseReplaceContentFromFile(PathReplaceListFile);
+        for(int i=0;mainReplace[i] != nullptr;i++) {
+            total.push_back(mainReplace[i]);
         }
     }
 
+    /* Config selection. */
+    if(Config[CFG_EnableHidePureTexture]){
+        PathReplace *p = (PathReplace *)malloc(sizeof(PathReplace));
+        p->target = PureTexture;
+        p->replace = EmptyTexture;
+        total.push_back(p);
+    }
+    if(Config[CFG_ReplacingExtraTrackTextureIndx] >= 0) {
+        for(int i=0;ExtraTrackTextures[i] != nullptr;i++){
+            PathReplace *p = (PathReplace *)malloc(sizeof(PathReplace));
+            p->target = ExtraTrackTextures[i];
+            p->replace = ExtraTrackTextures[Config[CFG_ReplacingExtraTrackTextureIndx]];
+            total.push_back(p);
+        }
+    }
+    if(Config[CFG_ReplacingTrackTextureIndx] >= 0){
+        for(int i=0;TrackTextures[i] != nullptr;i++){
+            PathReplace *p = (PathReplace *)malloc(sizeof(PathReplace));
+            p->target = TrackTextures[i];
+            p->replace = TrackTextures[Config[CFG_ReplacingTrackTextureIndx]];
+            total.push_back(p);
+        }
+    }
+    if(Config[CFG_NoteSide] >= 0){
+        for(int i=0;NoteTextures[i] != nullptr;i++){
+            PathReplace *p = (PathReplace *)malloc(sizeof(PathReplace));
+            p->target = NoteTextures[i];
+            p->replace = NoteTextures[Config[CFG_NoteSide]];
+            total.push_back(p);
+        }
+        for(int i=0;NoteHoldTexture[i] != nullptr;i++){
+            PathReplace *p = (PathReplace *)malloc(sizeof(PathReplace));
+            p->target = NoteHoldTexture[i];
+            p->replace = NoteHoldTexture[Config[CFG_NoteSide]];
+            total.push_back(p);
+        }
+        for(int i=0;NoteHoldHiTexture[i] != nullptr;i++){
+            PathReplace *p = (PathReplace *)malloc(sizeof(PathReplace));
+            p->target = NoteHoldHiTexture[i];
+            p->replace = NoteHoldHiTexture[Config[CFG_NoteSide]];
+            total.push_back(p);
+        }
+    }
+    if(Config[CFG_ArcTapSide] >= 0){
+        for(int i=0;ArcTapModelTexture[i] != nullptr;i++){
+            PathReplace *p = (PathReplace *)malloc(sizeof(PathReplace));
+            p->target = ArcTapModelTexture[i];
+            p->replace = ArcTapModelTexture[Config[CFG_ArcTapSide]];
+            total.push_back(p);
+        }
+        for(int i=0;ArcTapModelObject[i] != nullptr;i++){
+            PathReplace *p = (PathReplace *)malloc(sizeof(PathReplace));
+            p->target = ArcTapModelObject[i];
+            p->replace = ArcTapModelObject[Config[CFG_ArcTapSide]];
+            total.push_back(p);
+        }
+        for(int i=0;ArcTapModelMaterial[i] != nullptr;i++){
+            PathReplace *p = (PathReplace *)malloc(sizeof(PathReplace));
+            p->target = ArcTapModelMaterial[i];
+            p->replace = ArcTapModelMaterial[Config[CFG_ArcTapSide]];
+            total.push_back(p);
+        }
+    }
 
+    /* Build up */
+    PathReplace **newEntry = (PathReplace **)malloc(sizeof(PathReplace**) * (total.size() + 1));
+    for(int i=0;i<total.size();i++){
+        newEntry[i] = total[i];
+    }
+    newEntry[total.size()] = nullptr;
+    PathReplaceList = newEntry;
 
-    return fopen(path, mode);
+    /* Free extra memory usage */
+    if(mainReplace != nullptr) free(mainReplace);
 }
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_xyz_anon_arcsider_NativeHooker_Load(JNIEnv *env, jclass thiz) {
-    Hooker::HookGotPltByName("libcocos2dcpp.so", "AAssetManager_open", (void **)&ReplaceFun_AAssetManager_open);
-    Hooker::HookGotPltByName("libcocos2dcpp.so","fopen",(void**)&hookm_fopen);
+Java_xyz_anon_arcsider_NativeHooker_Load(JNIEnv *env, jclass thiz, jbyteArray c_str) {
+    LOGD("Begin Loadout");
+
+    size_t len = env->GetArrayLength(c_str);
+    jbyte *elem = env->GetByteArrayElements(c_str, 0);
+
+    memcpy(PathReplaceListFile,elem,len);
+    strcpy(PathReplaceListFile + len, PathReplaceListFileRelPath);
+    PathReplaceListFile[len + strlen(PathReplaceListFileRelPath)] = '\0';
+
+    memcpy(bundlePath, elem, len);
+    strcpy(bundlePath + len, bundlePathRelPath);
+    bundlePath[len + strlen(bundlePathRelPath)] = '\0';
+
+    memcpy(AssetSearchBase, elem, len);
+    strcpy(AssetSearchBase + len, AssetSearchBaseRelPath);
+    AssetSearchBase[len + strlen(AssetSearchBaseRelPath)] = '\0';
+
+    env->ReleaseByteArrayElements(c_str, elem, NULL);
+    LOGI("Directory path init fin.");
+
+    LOGI((string("PathReplaceListFile = ") + string(PathReplaceListFile)).c_str());
+    LOGI((string("bundlePath = ") + string(bundlePath)).c_str());
+    LOGI((string("AssetSearchBase = ") + string(AssetSearchBase)).c_str());
+
+    ReloadPathReplace();
+
+    /*for(int i=0;PathReplaceList[i] != nullptr;i++){
+        LOGD(PathReplaceList[i]->target);
+        LOGD(PathReplaceList[i]->replace);
+        LOGD("--------");
+    }*/
+
+    Hooker::HookGotPltByName("libcocos2dcpp.so", "AAssetManager_open", (void **)&rAAssetManager_open);
+    Hooker::HookGotPltByName("libcocos2dcpp.so", "AAsset_getLength", (void **)&rAAsset_getLength);
+    Hooker::HookGotPltByName("libcocos2dcpp.so", "AAsset_read", (void **)&rAAsset_read);
+    Hooker::HookGotPltByName("libcocos2dcpp.so", "AAsset_close", (void **)&rAAsset_close);
+    Hooker::HookGotPltByName("libcocos2dcpp.so", "fopen", (void**)&rfopen);
+    LOGI("SUCCESSFUL Hook all required function.");
+    LOGI("Loadout finish.");
 }
 extern "C"
 JNIEXPORT void JNICALL
@@ -751,4 +305,9 @@ Java_xyz_anon_arcsider_NativeHooker_SetConfig(JNIEnv *env, jclass clazz, jint in
             }
             break;
     }
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_xyz_anon_arcsider_NativeHooker_ReloadReplaceTable(JNIEnv *env, jclass clazz) {
+    ReloadPathReplace();
 }

@@ -10,4 +10,16 @@
     <string name="gene_dark">Conflict</string>
     <string name="gene_follow_chartset">Follow chart set</string>
     <string name="gene_colorless">ColorLess</string>
+    <string name="btn_pickafile">Select replacement</string>
+    <string name="btn_usedefaultreplace">Use default</string>
+    <string name="btn_pickafile_tips">The file should be a zip file, all inside file will replace most of the arcaea assets while in game.</string>
+    <!-- Runtime usage -->
+    <string name="rt_toast_success">Success</string>
+    <string name="rt_toast_sthgowrong">Something go wrong, retry it.</string>
+    <string name="rt_toast_fileloadfailed">Cannot load the file.</string>
+    <string name="rt_toast_cannot_deletedir">Cannot delete directory.</string>
+
+    <!-- Sync tip texts -->
+    <string name="rt_lbl_pickfile">Choose a replacing file to process.</string>
+    <string name="rt_lbl_start_arcaea">Now, Start Arcaea to apply setup.(Need enable module for arcaea.)</string>
 </resources>

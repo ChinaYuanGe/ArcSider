@@ -10,4 +10,16 @@
     <string name="gene_dark">纠纷侧</string>
     <string name="gene_follow_chartset">跟随铺面设置</string>
     <string name="gene_colorless">消光侧</string>
+    <string name="btn_pickafile">选择替换</string>
+    <string name="btn_usedefaultreplace">使用默认</string>
+    <string name="btn_pickafile_tips">选择的文件会直接替换大多数 Arcaea 的资源.</string>
+    <!-- Runtime usage -->
+    <string name="rt_toast_success">操作成功</string>
+    <string name="rt_toast_sthgowrong">发生了错误, 请重试.</string>
+    <string name="rt_toast_fileloadfailed">无法加载文件.</string>
+    <string name="rt_toast_cannot_deletedir">无法删除文件夹.</string>
+
+    <!-- Sync -->
+    <string name="rt_lbl_pickfile">选择一个替换文件以继续</string>
+    <string name="rt_lbl_start_arcaea">现在启动 Arcaea 以应用设定.(需启用模块)</string>
 </resources>

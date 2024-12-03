@@ -36,7 +36,6 @@ namespace Hooker
 
                 if (ststrtab == nullptr)
                 {
-                    LOGE("No .ststrtab segment located");
                     return;
                 }
 
@@ -48,8 +47,6 @@ namespace Hooker
                     fseek(elfFile, (long)(ststrtab->sh_offset + segInfo.sh_name), SEEK_SET);
                     fread((void *)&segName, sizeof(char), 32, elfFile);
 
-                    __android_log_print(ANDROID_LOG_INFO, __LOGTAG, "Seg:%s, VirAddr=%lx, Off=%lx, Size=%lx",
-                                        segName, segInfo.sh_addr, segInfo.sh_offset, segInfo.sh_size);
                 }
 
                 free(segmentHList);
@@ -58,8 +55,14 @@ namespace Hooker
         }
         else
         {
-            LOGE("Unable to find loaded module.");
+
         }
+    }
+
+    void *FindMethodAddress(char *modulename, char *funcName){
+
+
+        return nullptr;
     }
 
     void *HookGotPltByName(char *modulename, char *funcName, void **replace)
@@ -125,7 +128,6 @@ namespace Hooker
 
                 if (segment_relaplt == nullptr || segment_dynsym == nullptr || segment_dynstr == nullptr)
                 {
-                    Logger::E("Unable to locate needed segments. returning");
                     return nullptr;
                 }
 
@@ -165,18 +167,26 @@ namespace Hooker
                 // LOGD("TEST2");
                 if (gotAddr != nullptr)
                 {
+                    PModule *addrCurModule = map.FindModuleByAddress(gotAddr);
                     mprotect((void *)PAGE_START((uint64_t)gotAddr), PAGE_SIZE, PROT_READ | PROT_WRITE);
-                    //__android_log_print(ANDROID_LOG_WARN, __LOGTAG, "GOT Pick:%lx", gotAddr);
-                    // mprotect((void *)PAGE_START((uint64_t)gotAddr), PAGE_SIZE, PROT_READ | PROT_WRITE);
+                    //mprotect(addrCurModule->AddrStart,((uint64_t)addrCurModule->AddrStart - (uint64_t)addrCurModule->AddrStart), PROT_READ | PROT_WRITE | PROT_EXEC);
                     originFun = (void *)*gotAddr;
 
                     //__android_log_print(ANDROID_LOG_WARN, __LOGTAG, "GOT replace:%lx", replace);
                     *gotAddr = (uint64_t)replace;
+
+                    /*mprotect(addrCurModule->AddrStart,((uint64_t)addrCurModule->AddrStart - (uint64_t)addrCurModule->AddrStart),
+                             (addrCurModule->Perm_Read ? PROT_READ : 0) |
+                                     (addrCurModule->Perm_Write ? PROT_WRITE : 0) |
+                                     (addrCurModule->Perm_Execute ? PROT_EXEC : 0) |
+                                     (addrCurModule->Perm_Share ? PROT_SEM : 0)
+                             );*/
                     //__android_log_print(ANDROID_LOG_INFO, __LOGTAG, "Got Hooked target: %s => %lx", funcName, replace);
+
+                    //mprotect(mod->AddrStart,((uint64_t)mod->AddrEnd - (uint64_t)mod->AddrStart),PROT_READ);
                 }
                 else
                 {
-                    LOGE("Failed to get Got address, ignore hooking.");
                 }
                 free(segmentHList);
             }
@@ -215,7 +225,6 @@ namespace Hooker
     }
     void *HookGotPlt(uint64_t addr, void **replace)
     {
-        __android_log_print(ANDROID_LOG_WARN, __LOGTAG, "target address = %lx", addr);
         // LOGI("mprotect setup.");
         mprotect((void *)PAGE_START(addr), PAGE_SIZE, PROT_READ | PROT_WRITE);
         // LOGI("START HOOK.");

@@ -3,7 +3,7 @@
 #ifndef __LOGGER_HPP_
 #define __LOGGER_HPP_
 
-char *__LOGTAG = "moe.oly.crc.hooker";
+#define __LOGTAG "xyz.anon.arcsider"
 
 #define LOGA(TYPE, MSG, ...) __android_log_print(TYPE, __LOGTAG, MSG, ...)
 #define LOG(TYPE, MSG) __android_log_print(TYPE, __LOGTAG, MSG)
@@ -21,9 +21,12 @@ char *__LOGTAG = "moe.oly.crc.hooker";
 #define LOGFATAL(MSG) LOG(ANDROID_LOG_FATAL, MSG)
 
 #define LOGDA(MSG, ...) LOGA(ANDROID_LOG_DEBUG, MSG, ...)
-#define LOGD(MSG) LOG(ANDROID_LOG_DEBUG, MSG)
 
-namespace Logger
+//#define LOGD(MSG) LOG(ANDROID_LOG_DEBUG, MSG)
+
+#define LOGD(MSG)
+
+/*namespace Logger
 {
     void Log(int type, const char *fmt, ...)
     {
@@ -67,6 +70,6 @@ namespace Logger
         Log(ANDROID_LOG_FATAL, fmt, l);
         va_end(l);
     }
-}
+}*/
 
 #endif

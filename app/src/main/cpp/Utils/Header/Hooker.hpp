@@ -17,13 +17,10 @@ namespace Hooker
         Replace current address in got table,
      */
     void PLTTest(char *modulename);
-    void *HookGotPltByName(char *modulename, char *funcName, void *replace);
+    void *HookGotPltByName(char *modulename, char *funcName, void **replace);
     void *HookGotPlt(char *modulename, uint64_t funcOffset, void **replace);
     void *HookGotPlt(uint64_t addr, void **replace);
     void set_mprotect(uint64_t addr, int value);
     void copymem(void *dest, void *src, size_t len);
 }
-
-#include "../Source/Hooker.cpp"
-
 #endif

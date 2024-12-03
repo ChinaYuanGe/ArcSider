@@ -20,6 +20,47 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:id="@+id/lbl_synctips"
+            android:text="@string/rt_lbl_pickfile"
+            android:textAlignment="center"
+            ></TextView>
+
+        <TableLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TableRow>
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/btn_pickafile"
+                android:textAlignment="center"
+                android:id="@+id/btn_setReplace"
+                ></Button>
+                <Button
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/btn_usedefaultreplace"
+                    android:textAlignment="center"
+                    android:id="@+id/btn_useDefaultReplace"
+                    ></Button>
+            </TableRow>
+        </TableLayout>
+
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_pickafile_tips"
+            android:textAlignment="center"
+            ></TextView>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="48px"></Space>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:text="@string/tips_restart_apply"
             android:textAlignment="center"
             ></TextView>
