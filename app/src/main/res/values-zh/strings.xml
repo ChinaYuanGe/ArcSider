@@ -20,6 +20,6 @@
     <string name="rt_toast_cannot_deletedir">无法删除文件夹.</string>
 
     <!-- Sync -->
-    <string name="rt_lbl_pickfile">选择一个替换文件以继续</string>
+    <string name="rt_lbl_pickfile">选择一个替换方案以继续</string>
     <string name="rt_lbl_start_arcaea">现在启动 Arcaea 以应用设定.(需启用模块)</string>
 </resources>
