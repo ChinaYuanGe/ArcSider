@@ -25,7 +25,7 @@ static char bundlePath[128];
 const char *PathReplaceListFileRelPath = "/asset_patch/path.txt";
 static char PathReplaceListFile[128];
 
-PathReplace **PathReplaceList;
+PathReplace **PathReplaceList = nullptr;
 
 vector<AssetPatch *> AssetPatchList;
 AssetPatch* FindPatch(AAsset *id){
@@ -61,7 +61,9 @@ AAsset* rAAssetManager_open(AAssetManager *mgr, const char *filename, int mode) 
         }
     }
     if (seek != nullptr){// If Still nullptr, give up data override.
-        seek->Pos = 0;
+
+        seek->Data = fopen(seek->Filename,"r");
+
         seek->Identify = AAssetManager_open(mgr,filename,mode);
         return seek->Identify;
     }
@@ -81,7 +83,11 @@ off_t rAAsset_getLength(AAsset* asset){
 
     AssetPatch *seeked = FindPatch(asset);
     if(seeked != nullptr){
-        return seeked->Length;
+        long lastPos = ftell(seeked->Data);
+        fseek(seeked->Data,0,SEEK_END);
+        long curLen = ftell(seeked->Data);
+        fseek(seeked->Data,lastPos,SEEK_SET);
+        return curLen;
     }
     else return AAsset_getLength(asset);
 }
@@ -91,25 +97,14 @@ int rAAsset_read(AAsset* asset, void* buf, size_t count){
 
     AssetPatch *seeked = FindPatch(asset);
     if(seeked != nullptr){
-        if(seeked->Pos + 1 >= (seeked->Length)) {
-            return 0;
-        }
-        else {
-            off_t beforeReadPos = seeked->Pos;
-            seeked->Pos =
-                    (seeked->Pos + count) > seeked->Length ? seeked->Length - 1 : seeked->Pos +
-                                                                                  count;
-            int realReadCount = seeked->Pos - beforeReadPos;
-            memcpy(buf, seeked->Data + beforeReadPos, realReadCount);
-            return realReadCount;
-        }
+        return fread(buf,1,count,seeked->Data);
     }
     else return AAsset_read(asset,buf,count);
 }
 void rAAsset_close(AAsset* asset){
     AssetPatch *seeked = FindPatch(asset);
     if(seeked != nullptr){
-        seeked->Pos = 0;
+        fclose(seeked->Data);
         seeked->Identify = nullptr;
     }
     AAsset_close(asset);
@@ -243,8 +238,15 @@ void ReloadPathReplace(){
         newEntry[i] = total[i];
     }
     newEntry[total.size()] = nullptr;
-    PathReplaceList = newEntry;
 
+    //Free old tree.
+    if(PathReplaceList != nullptr){
+        for(int i=0;PathReplaceList[i] != nullptr;i++){
+            free(PathReplaceList[i]);
+        }
+    }
+
+    PathReplaceList = newEntry;
     /* Free extra memory usage */
     if(mainReplace != nullptr) free(mainReplace);
 }

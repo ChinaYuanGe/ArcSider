@@ -3,7 +3,7 @@
 using namespace std;
 
 void FreeAssetPatch(AssetPatch *a){
-    free(a->Data);
+    fclose(a->Data);
     free(a);
 }
 
@@ -18,29 +18,9 @@ AssetPatch *CreateAssetPatch(const char *base,const char *filePath) {
     LOGD((string("TargetPath=") + string(absPath)).c_str());
 
     if(!access(absPath,O_RDONLY)){
-        FILE *file = fopen(absPath,"r");
-        if(file != NULL) {
-            // Get file length
-            AssetPatch *ret = (AssetPatch *) malloc(sizeof(AssetPatch));
-            ret->Filename = (char*)malloc(strlen(filePath) + 1);
-            strcpy(ret->Filename,filePath);
-            ret->Filename[strlen(filePath)] = '\0';
-            if(!fseek(file,0,SEEK_END)) {
-                ret->Length = ftell(file);
-
-                if (ret->Length >= 0) {
-                    ret->Data = (char *) malloc(ret->Length);
-                    fseek(file, 0, SEEK_SET);
-                    if (fread(ret->Data, ret->Length, 1, file)) {
-                        fclose(file);
-                        return ret;
-                    }
-                }
-            }
-            // If not successfully, just free and return nullptr.
-            FreeAssetPatch(ret);
-            fclose(file);
-        }
+        AssetPatch *ret = (AssetPatch *) malloc(sizeof(AssetPatch));
+        strcpy(ret->Filename,absPath);
+        return ret;
     }
     return nullptr;
 }

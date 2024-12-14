@@ -11,10 +11,8 @@
 #define __ASSETPATCH_H_
 
 typedef struct{
-    char *Filename = nullptr;
-    char *Data = nullptr;
-    off64_t Length = 0;
-    off_t Pos = 0;
+    char Filename[256];
+    FILE *Data;
     AAsset *Identify = nullptr;
 } AssetPatch;
 
