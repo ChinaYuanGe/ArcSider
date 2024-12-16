@@ -6,7 +6,9 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContentResolverCompat;
+import androidx.core.content.FileProvider;
 
+import android.app.Activity;
 import android.app.AndroidAppHelper;
 import android.content.BroadcastReceiver;
 import android.content.ContentProvider;
@@ -151,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
                         MainActivity.this.registerReceiver(CurlReqReceiver,new IntentFilter("xyz.anon.arcsider.REQUEST_CURL"),Context.RECEIVER_EXPORTED);
                         Log.d("xyz.anon.arcsider","Content sync setup completed.");
                         ((TextView)MainActivity.this.findViewById(R.id.lbl_synctips)).setText(getText(R.string.rt_lbl_start_arcaea));
-
+                        SetupContentUriPost();
                     }
                 }
                 catch (Exception ex){
@@ -269,6 +271,8 @@ public class MainActivity extends AppCompatActivity {
                             Log.d("xyz.anon.arcsider","Content sync setup completed.");
                             ((TextView)MainActivity.this.findViewById(R.id.lbl_synctips)).setText(getText(R.string.rt_lbl_start_arcaea));
 
+
+                            SetupContentUriPost();
                         }
                     }
                     catch (Exception ex){
@@ -287,6 +291,25 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    void SetupContentUriPost(){
+        Context context = this;
+        File f = new File(context.getFilesDir(),"replace/content.zip");
+
+        if(f.isFile()) {
+            android.net.Uri u = FileProvider.getUriForFile(context, "xyz.anon.arcsider.ReplaceContentProvider", f);
+            RequestContentUrlReceiver.targetSend = u;
+            Intent post = new Intent();
+            post.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+            post.setData(u);
+            post.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            //context.grantUriPermission("moe.low.arc",u,Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            post.setClassName("moe.low.arc","low.moe.AppActivity");
+
+            startActivity(post);
+        }
     }
 
     void SendConfigBroadcast(){

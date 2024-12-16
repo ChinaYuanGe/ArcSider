@@ -37,12 +37,12 @@
         
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="xyz.anon.arcsider.ContentProvider"
+            android:authorities="xyz.anon.arcsider.ReplaceContentProvider"
             android:grantUriPermissions="true"
             android:exported="false">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/paths"></meta-data>
+                android:resource="@xml/paths"/>
         </provider>
 
         <receiver

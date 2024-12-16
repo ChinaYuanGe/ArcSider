@@ -6,7 +6,13 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
+import android.os.Bundle;
 import android.util.Log;
+
+import androidx.activity.ComponentActivity;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.contract.ActivityResultContracts;
 
 import java.lang.annotation.Native;
 import java.nio.charset.StandardCharsets;
@@ -25,7 +31,6 @@ public class XpHooker implements IXposedHookLoadPackage {
         Class<?> Activity = loadPackageParam.classLoader.loadClass("low.moe.AppActivity");
         java.lang.reflect.Method AcCreateM = Activity.getDeclaredMethod("onCreate", android.os.Bundle.class);
         java.lang.reflect.Method AcDestroyM = Activity.getDeclaredMethod("onDestroy");
-
         XposedBridge.hookMethod(AcCreateM, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
