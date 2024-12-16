@@ -27,6 +27,9 @@ public class RequestContentUrlReceiver extends BroadcastReceiver {
             //post.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             context.sendBroadcast(post);
             Log.i("xyz.anon.arcsider","content replace request responsed.");
+
+            //Cleanup for avoid multi calling.
+            targetSend = null;
         }
     }
 }
