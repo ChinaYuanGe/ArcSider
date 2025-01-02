@@ -21,7 +21,7 @@ public class RequestContentUrlReceiver extends BroadcastReceiver {
         if(targetSend != null) {
             Intent post = new Intent("xyz.anon.arcsider.RESPONSE_CURL");
             //android.net.Uri u = FileProvider.getUriForFile(context, "xyz.anon.arcsider.ReplaceContentProvider", f);
-            post.setPackage("moe.low.arc");
+            //post.setPackage("moe.low.arc");
             //post.setData(targetSend);
             post.putExtra("curl", targetSend);
             //post.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

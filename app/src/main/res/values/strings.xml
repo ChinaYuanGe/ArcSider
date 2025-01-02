@@ -13,6 +13,7 @@
     <string name="btn_pickafile">Pick file</string>
     <string name="btn_usedefaultreplace">Use default</string>
     <string name="btn_pickafile_tips">The file should be a zip file, all inside file will replace most of the arcaea assets while in game.</string>
+    <string name="dialog_title_inputpkgname">Input Target Pkg name</string>
     <!-- Runtime usage -->
     <string name="rt_toast_success">Success</string>
     <string name="rt_toast_sthgowrong">Something go wrong, retry it.</string>

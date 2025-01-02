@@ -9,11 +9,13 @@ import androidx.core.content.ContentResolverCompat;
 import androidx.core.content.FileProvider;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.AndroidAppHelper;
 import android.content.BroadcastReceiver;
 import android.content.ContentProvider;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.AssetManager;
@@ -25,6 +27,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -37,6 +40,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Target;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -172,7 +176,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     });
-
+    String TargetPkgName = "moe.low.arc";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Config.ConfigPath = this.getFilesDir().getAbsolutePath() + "/configs";
@@ -291,6 +295,32 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        binding.btnSetTargetPkg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                EditText input = new EditText(MainActivity.this);
+                input.setText(TargetPkgName);
+                AlertDialog dia = new AlertDialog.Builder(MainActivity.this)
+                        .setTitle(getText(R.string.dialog_title_inputpkgname))
+                        .setView(input)
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                TargetPkgName = input.getText().toString();
+                                Toast.makeText(MainActivity.this,TargetPkgName,Toast.LENGTH_LONG).show();
+                            }
+                        })
+                        .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+
+                            }
+                        })
+                        .create();
+                dia.show();
+            }
+        });
     }
 
     void SetupContentUriPost(){
@@ -306,7 +336,7 @@ public class MainActivity extends AppCompatActivity {
             post.setData(u);
             post.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             //context.grantUriPermission("moe.low.arc",u,Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            post.setClassName("moe.low.arc","low.moe.AppActivity");
+            post.setClassName(TargetPkgName,"low.moe.AppActivity");
 
             startActivity(post);
         }

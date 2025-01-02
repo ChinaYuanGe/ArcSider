@@ -13,6 +13,7 @@
     <string name="btn_pickafile">选择替换</string>
     <string name="btn_usedefaultreplace">使用默认</string>
     <string name="btn_pickafile_tips">选择的文件会直接替换大多数 Arcaea 的资源.</string>
+    <string name="dialog_title_inputpkgname">输入目标包名</string>
     <!-- Runtime usage -->
     <string name="rt_toast_success">操作成功</string>
     <string name="rt_toast_sthgowrong">发生了错误, 请重试.</string>
